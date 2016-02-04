@@ -39,21 +39,10 @@ ciClient
   .then(function (builds) {
     return extractBuildRepoUrl(builds.NewAngularTemplate);
   })
-  .then(function (repos) {
-    repos.forEach(repo => {
-      let dir = getRepoDir(repo);
-      if (!fs.existsSync(dir)) {
-        if (_.includes(repo, 'github.com')) {
-          shell.exec('git clone --depth 1 ' + repo + ' ' + dir);
-        } else {
-          console.log('Unsupported repo', repo);
-        }
-      } else {
-        //console.log('Updating repo', repo);
-        //shell.exec('cd ' + dir + ' && git pull');
-      }
-    });
-  })
+  .then(filterUniqueRepos)
+  .then(cloneOrPullRepos)
+  .then(readRepoPackageJson)
+  .then(validateScriptsSection)
   .catch(handleError);
 
 function excludeArchivedProjects(projects) {
@@ -115,8 +104,60 @@ function extractBuildRepoUrl(builds) {
   });
 }
 
+function filterUniqueRepos(repos) {
+  return _.uniq(repos);
+}
+
 function getRepoDir(repo) {
   return __dirname + '/tmp/' + _.last(repo.split('/'));
+}
+
+function cloneOrPullRepos(repos) {
+  repos.forEach(repo => {
+    let dir = getRepoDir(repo);
+    if (!fs.existsSync(dir)) {
+      if (_.includes(repo, 'github.com')) {
+        shell.exec('git clone --depth 1 ' + repo + ' ' + dir);
+      } else {
+        console.log('Unsupported repo', repo);
+      }
+    } else {
+      //console.log('Updating repo', repo);
+      //shell.exec('cd ' + dir + ' && git pull');
+    }
+  });
+  return repos;
+}
+
+function readRepoPackageJson(repos) {
+  return repos.map(function (repo) {
+    let packageJson = getRepoDir(repo) + '/package.json';
+    if (fs.existsSync(packageJson)) {
+      return {
+        repo: repo,
+        json: JSON.parse(fs.readFileSync(packageJson))
+      };
+    }
+    return { repo: repo };
+  });
+}
+
+function validateScriptsSection(repos) {
+  repos.forEach(function (repo) {
+    if (!repo.json) {
+      console.log(_.padEnd(repo.repo, 80), 'package.json is missing');
+    } else if (!repo.json.scripts) {
+      console.log(_.padEnd(repo.repo, 80), 'scripts section is missing');
+    } else {
+      let valid = ['build', 'release', 'test', 'start'].reduce(function (valid, curr) {
+        return !valid ? valid : !!repo.json.scripts[curr];
+      }, true);
+      if (!valid) {
+        console.log(_.padEnd(repo.repo, 80), 'scripts section is incorrect');
+      }
+    }
+  });
+  return repos;
 }
 
 function handleError(error) {
