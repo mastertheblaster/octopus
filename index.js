@@ -3,6 +3,8 @@
 
 const Q     = require('bluebird');
 const _     = require('lodash');
+const shell = require('shelljs');
+const fs    = require('fs');
 const auth  = require('./auth');
 const ci    = require('./ci');
 const cache = require('./cache');
@@ -39,7 +41,17 @@ ciClient
   })
   .then(function (repos) {
     repos.forEach(repo => {
-      console.log(repo);
+      let dir = getRepoDir(repo);
+      if (!fs.existsSync(dir)) {
+        if (_.includes(repo, 'github.com')) {
+          shell.exec('git clone --depth 1 ' + repo + ' ' + dir);
+        } else {
+          console.log('Unsupported repo', repo);
+        }
+      } else {
+        console.log('Updating repo', repo);
+        shell.exec('cd ' + dir + ' && git pull');
+      }
     });
   })
   .catch(handleError);
@@ -101,6 +113,10 @@ function extractBuildRepoUrl(builds) {
       })).value;
     });
   });
+}
+
+function getRepoDir(repo) {
+  return __dirname + '/tmp/' + _.last(repo.split('/'));
 }
 
 function handleError(error) {
