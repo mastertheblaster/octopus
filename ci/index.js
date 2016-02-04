@@ -2,7 +2,7 @@
 
 const Q       = require('bluebird');
 const request = require('request');
-
+const _       = require('lodash');
 
 function call(config, path) {
   return new Q(function (resolve, reject) {
@@ -41,6 +41,10 @@ module.exports = {
       },
       getBuild: function (build) {
         return call(config, build.href);
+      },
+      getBuildVcs: function (build) {
+        var href = _.first(build['vcs-root-entries']['vcs-root-entry'])['vcs-root'].href;
+        return call(config, href);
       }
     };
   }
