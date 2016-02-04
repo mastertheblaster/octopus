@@ -49,8 +49,8 @@ ciClient
           console.log('Unsupported repo', repo);
         }
       } else {
-        console.log('Updating repo', repo);
-        shell.exec('cd ' + dir + ' && git pull');
+        //console.log('Updating repo', repo);
+        //shell.exec('cd ' + dir + ' && git pull');
       }
     });
   })
