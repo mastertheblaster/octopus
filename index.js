@@ -10,19 +10,16 @@ const ci    = require('./ci');
 const cache = require('./cache');
 
 
-// Ask for CI credentials only once.
-let ciCreds = _.memoize(function () {
-  return auth.getCreds('Credentials for CI required');
+let ciAuth = _.memoize(function () {
+  return auth.getCreds('Authentication required for CI...');
 });
 
-// Create a CI client.
-let ciClient = ci.client({
-  host: '[ci host name including the port]',
-  auth: ciCreds
+let ciHost = _.memoize(function () {
+  return auth.getHost('Connecting to CI...');
 });
 
-// Cache the responses to files inside tmp folder.
-// So next time you run the app it will not call the CI.
+let ciClient = ci.client({ host: ciHost, auth: ciAuth });
+
 cache.toFile(ciClient, 'getProjects', __dirname + '/tmp/projects.json');
 cache.toFile(ciClient, 'getProject',  __dirname + '/tmp/project-${id}.json');
 cache.toFile(ciClient, 'getBuild',    __dirname + '/tmp/build-${id}.json');
