@@ -29,6 +29,19 @@ function getUser() {
   });
 }
 
+function getHost(prompt) {
+  console.log(prompt);
+  return new Q(function (resolve, reject) {
+    read({prompt: 'Host:'}, function (error, host, isDefault) {
+      if (error || isDefault || !host) {
+        reject('Bad host');
+      } else {
+        resolve(host);
+      }
+    });
+  });
+}
+
 function getCreds(prompt) {
   console.log(prompt);
   return Q.reduce([getUser, getPass], function (result, task) {
@@ -39,5 +52,6 @@ function getCreds(prompt) {
 }
 
 module.exports = {
-  getCreds: getCreds
+  getCreds: getCreds,
+  getHost: getHost
 };
