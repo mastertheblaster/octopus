@@ -59,6 +59,9 @@ module.exports = {
       getProjects: function () {
         return call(config, '/httpAuth/app/rest/projects/');
       },
+      getBuildTypes: function () {
+        return call(config, '/httpAuth/app/rest/buildTypes/');
+      },
       getProject: function (project) {
         return call(config, project.href);
       },
