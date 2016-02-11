@@ -87,9 +87,11 @@ program
         });
       })
       .then(function (roots) {
-        console.log(roots.map(function (root) {
+        roots.map(function (root) {
           return root.value;
-        }));
+        }).forEach(function (repo) {
+          console.log(repo);
+        });
       })
       .catch(console.error);
   });
