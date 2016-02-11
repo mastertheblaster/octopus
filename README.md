@@ -24,6 +24,6 @@ octopus cache clean       # Clean, clean, clean a cache
 
 octopus projects          # List all projects
 octopus projects blah     # List projects containing a blah text in description
-octopus builds            # List all builds
-octopus builds blah       # List all builds containg a blah text in description
+octopus builds-types      # List all builds
+octopus builds-types blah # List all builds containg a blah text in description
 ```
