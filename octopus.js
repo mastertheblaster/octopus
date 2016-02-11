@@ -38,10 +38,8 @@ program
       console.log(CACHE_DIR);
     } else if (command === 'clean') {
       shell.rm(CACHE_DIR + '/projects.json');
-      shell.rm(CACHE_DIR + '/project-*.json');
-      shell.rm(CACHE_DIR + '/build-*.json');
-      shell.rm(CACHE_DIR + '/vcs-*.json');
       shell.rm(CACHE_DIR + '/build-types.json');
+      shell.rm(CACHE_DIR + '/vcs-roots.json');
     } else {
       console.log(shell.ls(CACHE_DIR));
     }
