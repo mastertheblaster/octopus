@@ -12,7 +12,7 @@ That's it!
 npm start
 ```
 
-## Alternate approach
+## Alternate approach (faster one)
 ```bash
 git clone git@github.com:mastertheblaster/octopus.git
 cd octopus
