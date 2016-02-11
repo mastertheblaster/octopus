@@ -1,7 +1,7 @@
 {
   "name": "octopus",
   "version": "1.0.0",
-  "description": "Tool for searching the TeamCity and GIT",
+  "description": "Tool for querying TeamCity (CI) and GIT",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
@@ -10,9 +10,13 @@
   "license": "ISC",
   "dependencies": {
     "bluebird": "^3.2.1",
+    "commander": "^2.9.0",
     "lodash": "^4.2.1",
     "read": "^1.0.7",
     "request": "^2.69.0",
     "shelljs": "^0.5.3"
+  },
+  "bin": {
+    "octopus": "octopus.js"
   }
 }
