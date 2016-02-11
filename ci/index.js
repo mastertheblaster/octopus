@@ -62,6 +62,9 @@ module.exports = {
       getBuildTypes: function () {
         return call(config, '/httpAuth/app/rest/buildTypes/');
       },
+      getVcsRoots: function () {
+        return call(config, '/httpAuth/app/rest/vcs-roots/?fields=vcs-root(properties(property))');
+      },
       getProject: function (project) {
         return call(config, project.href);
       },

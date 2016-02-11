@@ -4,7 +4,6 @@
 
 const os      = require('os');
 const process = require('process');
-const Q       = require('bluebird');
 const shell   = require('shelljs');
 const _       = require('lodash');
 const program = require('commander');
@@ -24,10 +23,8 @@ let ciClient = ci.client({
 });
 
 cache.toFile(ciClient, 'getProjects',   CACHE_DIR + '/projects.json');
-cache.toFile(ciClient, 'getProject',    CACHE_DIR + '/project-${id}.json');
-cache.toFile(ciClient, 'getBuild',      CACHE_DIR + '/build-${id}.json');
-cache.toFile(ciClient, 'getBuildVcs',   CACHE_DIR + '/vcs-${id}.json');
 cache.toFile(ciClient, 'getBuildTypes', CACHE_DIR + '/build-types.json');
+cache.toFile(ciClient, 'getVcsRoots',   CACHE_DIR + '/vcs-roots.json');
 
 program
   .version('1.0.0')
@@ -73,6 +70,27 @@ program
       .then(function (buildTypes) {
         console.log(buildTypes.buildType.filter(function (buildType) {
           return query ? _.includes(JSON.stringify(buildType).toLowerCase(), query.toLowerCase()) : true;
+        }));
+      })
+      .catch(console.error);
+  });
+
+program
+  .command('vcs-roots')
+  .description('List all the VCS roots on CI')
+  .action(function () {
+    ciClient
+      .getVcsRoots()
+      .then(function (roots) {
+        return roots['vcs-root'].map(function (root) {
+          return root.properties.property.find(function (property) {
+            return property.name === 'url';
+          });
+        });
+      })
+      .then(function (roots) {
+        console.log(roots.map(function (root) {
+          return root.value;
         }));
       })
       .catch(console.error);
