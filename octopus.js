@@ -96,4 +96,25 @@ program
       .catch(console.error);
   });
 
+program
+  .command('report-templates')
+  .description('Show report on build templates')
+  .action(function () {
+    ciClient
+      .getBuildTypes()
+      .then(function (buildTypes) {
+        return buildTypes.reduce(function (context, build) {
+          var id = _.property('template.id')(build) || '???';
+          context[id] = (context[id] || 0) + 1;
+          return context;
+        }, {});
+      })
+      .then(function(report) {
+        _.keys(report).forEach(function (key) {
+          console.log(_.padEnd(key, 48), report[key]);
+        });
+      })
+      .catch(console.error);
+  });
+
 program.parse(process.argv);
