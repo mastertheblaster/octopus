@@ -4,7 +4,7 @@
   "description": "Tool for querying TeamCity (CI) and GIT",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node octopus.js --help"
   },
   "author": "Mantas Miliukas",
   "license": "ISC",

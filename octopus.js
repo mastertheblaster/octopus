@@ -52,7 +52,7 @@ program
     ciClient
       .getProjects()
       .then(function (projects) {
-        console.log(projects.project.filter(function (project) {
+        console.log(projects.filter(function (project) {
           return query ? _.includes(JSON.stringify(project).toLowerCase(), query.toLowerCase()) : true;
         }));
       })
@@ -66,7 +66,7 @@ program
     ciClient
       .getBuildTypes()
       .then(function (buildTypes) {
-        console.log(buildTypes.buildType.filter(function (buildType) {
+        console.log(buildTypes.filter(function (buildType) {
           return query ? _.includes(JSON.stringify(buildType).toLowerCase(), query.toLowerCase()) : true;
         }));
       })

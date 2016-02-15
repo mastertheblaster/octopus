@@ -57,23 +57,19 @@ module.exports = {
   client: function (config) {
     return {
       getProjects: function () {
-        return call(config, '/httpAuth/app/rest/projects/');
+        return call(config, '/httpAuth/app/rest/projects/')
+          .then(function (projects) {
+            return projects.project;
+          });
       },
       getBuildTypes: function () {
-        return call(config, '/httpAuth/app/rest/buildTypes/');
+        return call(config, '/httpAuth/app/rest/buildTypes/?fields=buildType(id,name,projectName,projectId,template)')
+          .then(function (buildTypes) {
+            return buildTypes.buildType;
+          });
       },
       getVcsRoots: function () {
         return call(config, '/httpAuth/app/rest/vcs-roots/?fields=vcs-root(properties(property))');
-      },
-      getProject: function (project) {
-        return call(config, project.href);
-      },
-      getBuild: function (build) {
-        return call(config, build.href);
-      },
-      getBuildVcs: function (build) {
-        var href = _.first(build['vcs-root-entries']['vcs-root-entry'])['vcs-root'].href;
-        return call(config, href);
       }
     };
   }
