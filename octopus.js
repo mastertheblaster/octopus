@@ -98,17 +98,16 @@ program
     ciClient
       .getBuildTypes()
       .then(function (buildTypes) {
-        return buildTypes.reduce(function (context, build) {
-          var id = _.property('template.id')(build) || '???';
-          context[id] = (context[id] || 0) + 1;
-          return context;
-        }, {});
+        return _(buildTypes)
+          .groupBy(function (build) {
+            return _.property('template.id')(build) || '???';
+          })
+          .mapValues(function (value) {
+            return value.length;
+          })
+          .value();
       })
-      .then(function(report) {
-        _.keys(report).forEach(function (key) {
-          console.log(_.padEnd(key, 48), report[key]);
-        });
-      })
+      .then(print)
       .catch(console.error);
   });
 
