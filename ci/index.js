@@ -1,10 +1,40 @@
-/* jshint latedef: false */
 'use strict';
 
 const Q       = require('bluebird');
 const request = require('request');
 const _       = require('lodash');
 
+
+function callCi(config, path, resolve, reject) {
+  console.log('Getting', path, '...');
+  request.get({
+    url: [config.host, path].join(''),
+    json: true,
+    auth: {
+      user: config.user,
+      pass: config.pass,
+      sendImmediately: false
+    }
+  }, function (error, response, body) {
+    if (!error && response.statusCode === 200) {
+      resolve(body);
+    } else {
+      reject('CI call failed');
+    }
+  });
+}
+
+function getCiCreds(config) {
+  return _.isFunction(config.auth) ?
+    config.auth() : Q.resolve(config.auth);
+}
+
+function getCiHost(config) {
+  return _.isFunction(config.host) ?
+    config.host().then(function (host) {
+      return {host: host};
+    }) : Q.resolve({host: config.host});
+}
 
 function call(config, path) {
   return new Q(function (resolve, reject) {
@@ -22,37 +52,6 @@ function call(config, path) {
   });
 }
 
-function callCi(config, path, resolve, reject) {
-    console.log('Getting', path, '...');
-    request.get({
-      url: [config.host, path].join(''),
-      json: true,
-      auth: {
-        user: config.user,
-        pass: config.pass,
-        sendImmediately: false
-      }
-    }, function (error, response, body) {
-      if (!error && response.statusCode === 200) {
-        resolve(body);
-      } else {
-        reject('CI call failed');
-      }
-    });
-  }
-
-function getCiCreds(config) {
-  return _.isFunction(config.auth) ?
-    config.auth() : Q.resolve(config.auth);
-}
-
-function getCiHost(config) {
-  return _.isFunction(config.host) ?
-    config.host().then(function (host) {
-      return {host: host};
-    }) : Q.resolve({host: config.host});
-}
-
 module.exports = {
   client: function (config) {
     return {
@@ -63,13 +62,13 @@ module.exports = {
           });
       },
       getBuildTypes: function () {
-        return call(config, '/httpAuth/app/rest/buildTypes/?fields=buildType(id,name,projectName,projectId,template)')
+        return call(config, '/httpAuth/app/rest/buildTypes/?fields=buildType(id,name,projectName,projectId,template,vcs-root-entries)')
           .then(function (buildTypes) {
             return buildTypes.buildType;
           });
       },
       getVcsRoots: function () {
-        return call(config, '/httpAuth/app/rest/vcs-roots/?fields=vcs-root(properties(property))');
+        return call(config, '/httpAuth/app/rest/vcs-roots/?fields=vcs-root(id,properties(property))');
       }
     };
   }
