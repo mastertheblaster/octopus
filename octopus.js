@@ -10,6 +10,7 @@ const program = require('commander');
 const auth    = require('./auth');
 const ci      = require('./ci');
 const cache   = require('./cache');
+const utils   = require('./utils');
 
 const CACHE_DIR = os.tmpdir() + '/octopus-1369bdd4-de3a-448d-bbc6-d0bdff74783e';
 
@@ -52,48 +53,36 @@ program
   .action(function (query) {
     ciClient
       .getProjects()
-      .then(filter(query))
-      .then(print)
+      .then(utils.filter(query))
+      .then(utils.print)
       .catch(console.error);
   });
 
 program
-  .command('build-types [query]')
-  .description('List all the build types on CI')
+  .command('builds [query]')
+  .description('List all the builds on CI')
   .action(function (query) {
     ciClient
       .getBuildTypes()
-      .then(filter(query))
-      .then(print)
+      .then(utils.filter(query))
+      .then(utils.print)
       .catch(console.error);
   });
 
 program
-  .command('vcs-roots')
-  .description('List all the VCS roots on CI')
-  .action(function () {
+  .command('repos [query]')
+  .description('List all repos on CI')
+  .action(function (query) {
     ciClient
       .getVcsRoots()
-      .then(function (roots) {
-        return roots['vcs-root'].map(function (root) {
-          return root.properties.property.find(function (property) {
-            return property.name === 'url';
-          });
-        });
-      })
-      .then(function (roots) {
-        roots.map(function (root) {
-          return root.value;
-        }).forEach(function (repo) {
-          console.log(repo);
-        });
-      })
+      .then(utils.filter(query))
+      .then(utils.print)
       .catch(console.error);
   });
 
 program
-  .command('report-templates')
-  .description('Show report on build templates')
+  .command('report:builds')
+  .description('Show build summary report')
   .action(function () {
     ciClient
       .getBuildTypes()
@@ -107,20 +96,8 @@ program
           })
           .value();
       })
-      .then(print)
+      .then(utils.printKeyValue)
       .catch(console.error);
   });
-
-function filter(query) {
-  return function (values) {
-    return query ? values.filter(function (value) {
-      return _.includes(JSON.stringify(value).toLowerCase(), query.toLowerCase());
-    }) : values;
-  };
-}
-
-function print(values) {
-  console.log(values);
-}
 
 program.parse(process.argv);

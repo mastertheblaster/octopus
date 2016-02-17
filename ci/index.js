@@ -68,7 +68,10 @@ module.exports = {
           });
       },
       getVcsRoots: function () {
-        return call(config, '/httpAuth/app/rest/vcs-roots/?fields=vcs-root(id,properties(property))');
+        return call(config, '/httpAuth/app/rest/vcs-roots/?fields=vcs-root(id,properties(property))')
+          .then(function (roots) {
+            return roots['vcs-root'];
+          });
       }
     };
   }
