@@ -13,6 +13,7 @@ const cache   = require('./cache');
 
 const CACHE_DIR = os.tmpdir() + '/octopus-1369bdd4-de3a-448d-bbc6-d0bdff74783e';
 
+
 let ciClient = ci.client({
   host: _.memoize(function () {
     return auth.getHost('Connecting to CI...');
@@ -51,11 +52,8 @@ program
   .action(function (query) {
     ciClient
       .getProjects()
-      .then(function (projects) {
-        console.log(projects.filter(function (project) {
-          return query ? _.includes(JSON.stringify(project).toLowerCase(), query.toLowerCase()) : true;
-        }));
-      })
+      .then(filter(query))
+      .then(print)
       .catch(console.error);
   });
 
@@ -65,11 +63,8 @@ program
   .action(function (query) {
     ciClient
       .getBuildTypes()
-      .then(function (buildTypes) {
-        console.log(buildTypes.filter(function (buildType) {
-          return query ? _.includes(JSON.stringify(buildType).toLowerCase(), query.toLowerCase()) : true;
-        }));
-      })
+      .then(filter(query))
+      .then(print)
       .catch(console.error);
   });
 
@@ -116,5 +111,17 @@ program
       })
       .catch(console.error);
   });
+
+function filter(query) {
+  return function (values) {
+    return query ? values.filter(function (value) {
+      return _.includes(JSON.stringify(value).toLowerCase(), query.toLowerCase());
+    }) : values;
+  };
+}
+
+function print(values) {
+  console.log(values);
+}
 
 program.parse(process.argv);
