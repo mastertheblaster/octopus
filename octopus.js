@@ -132,9 +132,6 @@ program
           .catch(utils.printError);
       })
       .catch(utils.printError);
-
-    ciClient.getVcsRoots();
-
   });
 
 program.parse(process.argv);
