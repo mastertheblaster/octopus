@@ -11,14 +11,11 @@ module.exports = {
       }) : values;
     };
   },
-  print: function (values) {
-    console.log(values);
-    return values;
+  printError: function (error) {
+    console.error(error);
   },
-  printKeyValue: function (value) {
-    _.keys(value).sort().forEach(function (key) {
-      console.log(_.padEnd(key, 48), value[key]);
-    });
+  printJson: function (value) {
+    console.log(JSON.stringify(value, null, 2));
     return value;
   }
 };

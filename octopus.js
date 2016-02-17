@@ -30,7 +30,7 @@ cache.toFile(ciClient, 'getVcsRoots',   CACHE_DIR + '/vcs-roots.json');
 
 program
   .version('1.0.0')
-  .description('Tool for querying TeamCity (CI) and GIT');
+  .description('Tool for querying TeamCity (CI) and GITHUB');
 
 program
   .command('cache [command]')
@@ -54,30 +54,30 @@ program
     ciClient
       .getProjects()
       .then(utils.filter(query))
-      .then(utils.print)
-      .catch(console.error);
+      .then(utils.printJson)
+      .catch(utils.printError);
   });
 
 program
   .command('builds [query]')
-  .description('List all the builds on CI')
+  .description('List all build types on CI')
   .action(function (query) {
     ciClient
       .getBuildTypes()
       .then(utils.filter(query))
-      .then(utils.print)
-      .catch(console.error);
+      .then(utils.printJson)
+      .catch(utils.printError);
   });
 
 program
   .command('repos [query]')
-  .description('List all repos on CI')
+  .description('List all repos (vcs-roots) on CI')
   .action(function (query) {
     ciClient
       .getVcsRoots()
       .then(utils.filter(query))
-      .then(utils.print)
-      .catch(console.error);
+      .then(utils.printJson)
+      .catch(utils.printError);
   });
 
 program
@@ -86,18 +86,21 @@ program
   .action(function () {
     ciClient
       .getBuildTypes()
-      .then(function (buildTypes) {
-        return _(buildTypes)
-          .groupBy(function (build) {
-            return _.property('template.id')(build) || '???';
-          })
-          .mapValues(function (value) {
-            return value.length;
-          })
-          .value();
-      })
-      .then(utils.printKeyValue)
-      .catch(console.error);
+      .then(ci.groupBuildTypes)
+      .then(utils.printJson)
+      .catch(utils.printError);
+  });
+
+program
+  .command('report:repos')
+  .description('Show repository summary report')
+  .action(function () {
+    ciClient
+      .getVcsRoots()
+      .then(ci.explodeRepos)
+      .then(ci.groupRepos)
+      .then(utils.printJson)
+      .catch(utils.printError);
   });
 
 program.parse(process.argv);

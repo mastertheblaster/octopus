@@ -53,6 +53,57 @@ function call(config, path) {
 }
 
 module.exports = {
+  groupBuildTypes: function (buildTypes) {
+    return _(buildTypes)
+      .groupBy(function (build) {
+        return _.property('template.id')(build) || '???';
+      })
+      .mapValues(function (value) {
+        return value.length;
+      })
+      .value();
+  },
+  groupRepos: function (repos) {
+    return _(repos)
+      .groupBy(function (repo) {
+        return repo.host;
+      })
+      .mapValues(function (group) {
+        return _.mapValues(_.groupBy(group, function (repo) {
+          return repo.owner;
+        }), function (reposInGroup) {
+          return reposInGroup.length;
+        });
+      })
+      .value();
+  },
+  explodeRepos: function (repos) {
+    return repos
+      .map(function (root) {
+        return {
+          id: root.id,
+          url: (root.properties.property.find(function (property) {
+            return property.name === 'url';
+          }) || {value: ''}).value
+        };
+      })
+      .map(function (repo) {
+        if (repo.url.indexOf('github.com') === -1) {
+          return _.assign({}, repo, {
+            host : '???',
+            owner: '???',
+            name : '???'
+          });
+        }
+        var hostPath = repo.url.split(':', 2);
+        var ownerName = _.last(hostPath).split('/', 2);
+        return _.assign({}, repo, {
+          host : _.first(hostPath),
+          owner: _.first(ownerName),
+          name : _.last(ownerName)
+        });
+      });
+  },
   client: function (config) {
     return {
       getProjects: function () {
