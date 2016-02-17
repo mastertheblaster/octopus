@@ -53,6 +53,15 @@ function call(config, path) {
 }
 
 module.exports = {
+  getRepoIdsOfBuildTypes: function (buildTypes, template) {
+    return buildTypes
+      .filter(function (build) {
+        return build.template && build.template.id === template;
+      })
+      .map(function (build) {
+        return _.first(build['vcs-root-entries']['vcs-root-entry']).id;
+      });
+  },
   groupBuildTypes: function (buildTypes) {
     return _(buildTypes)
       .groupBy(function (build) {

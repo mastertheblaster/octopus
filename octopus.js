@@ -103,4 +103,38 @@ program
       .catch(utils.printError);
   });
 
+program
+  .command('report:repos-for-template [template]')
+  .description('Show repositories of given build template')
+  .action(function (template) {
+    ciClient
+      .getBuildTypes()
+      .then(function (buildTypes) {
+        return ci.getRepoIdsOfBuildTypes(buildTypes, template);
+      })
+      .then(function (repoIds) {
+        ciClient
+          .getVcsRoots()
+          .then(ci.explodeRepos)
+          .then(function (repos) {
+            return repos.filter(function (repo) {
+              return _.includes(repoIds, repo.id);
+            });
+          })
+          .then(function (repos) {
+            return repos
+              .map(function (repo) {
+                return repo.url;
+              })
+              .sort();
+          })
+          .then(utils.printJson)
+          .catch(utils.printError);
+      })
+      .catch(utils.printError);
+
+    ciClient.getVcsRoots();
+
+  });
+
 program.parse(process.argv);
