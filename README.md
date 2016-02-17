@@ -1,10 +1,13 @@
-# Usage
+## Install
 
 ```bash
 git clone git@github.com:mastertheblaster/octopus.git
 cd octopus
 npm i -g
+```
 
+## Use
+```bash
 octopus cache dir         # Show the temporary cache location
 octopus cache list        # List files in a cache
 octopus cache clean       # Clean, clean, clean a cache
