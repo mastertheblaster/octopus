@@ -43,5 +43,5 @@ octopus report:builds -f csv -a templateId,count
 ```
 Analyze the packages and print out response in CSV format 
 ```bash
-octopus analyze TEMPLATE_ID -f csv -a projectName,name,repo.url,repo.isOnGitHub,repo.downloaded,repo.scripts.build,repo.scripts.release,repo.scripts.test,repo.scripts.start > result.csv
+octopus analyze TEMPLATE_ID -f csv -a  projectName,name,repo.url,repo.isOnGitHub,repo.downloaded,repo.scripts.build,repo.scripts.release,repo.scripts.test,repo.scripts.start > result.csv
 ```
