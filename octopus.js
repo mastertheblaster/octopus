@@ -2,6 +2,7 @@
 
 'use strict';
 
+const Q       = require('bluebird');
 const os      = require('os');
 const process = require('process');
 const shell   = require('shelljs');
@@ -9,6 +10,7 @@ const _       = require('lodash');
 const program = require('commander');
 const auth    = require('./auth');
 const ci      = require('./ci');
+const gh      = require('./github');
 const cache   = require('./cache');
 const utils   = require('./utils');
 
@@ -21,6 +23,12 @@ let ciClient = ci.client({
   }),
   auth: _.memoize(function () {
     return auth.getCreds('Authentication required for CI...');
+  })
+});
+
+let ghClient = gh.client({
+  token: _.memoize(function () {
+    return auth.getToken('Connecting to github...');
   })
 });
 
@@ -132,6 +140,71 @@ program
           .catch(utils.printError);
       })
       .catch(utils.printError);
+  });
+
+program
+  .command('report:package [template]')
+  .description('Show report on package.json for a given build type')
+  .action(function (template) {
+    ciClient
+      .getBuildTypes()
+      .then(function (buildTypes) {
+        return ci.getRepoIdsOfBuildTypes(buildTypes, template);
+      })
+      .then(function (repoIds) {
+        ciClient
+          .getVcsRoots()
+          .then(ci.explodeRepos)
+          .then(function (repos) {
+            return repos.filter(function (repo) {
+              return _.includes(repoIds, repo.id);
+            });
+          })
+          .then(function (repos) {
+            return Q.reduce(repos, function (result, repo) {
+              if (repo.url.indexOf('github.com') === -1)  {
+                return result.concat({
+                  url: repo.url,
+                  result: 'NOT SUPPORTED'
+                });
+              }
+              return ghClient
+                .getPackageJson(repo.url)
+                .then(function (json) {
+                  return result.concat({
+                    url: repo.url,
+                    package: json,
+                    result: 'SUCCESS'
+                  });
+                })
+                .catch(function () {
+                  return result.concat({
+                    url: repo.url,
+                    result: 'NOT FOUND OR ACCESS DENIED'
+                  });
+                });
+            }, []);
+          })
+          .then(function (repos) {
+            return repos.map(function (repo) {
+              if (repo.package) {
+                return _.merge(repo, utils.validatePackage(repo.package));
+              }
+              return repo;
+            });
+          })
+          .then(function (result) {
+            result.sort(function (a, b) {
+              return a.result.localeCompare(b.result);
+            }).forEach(function (item) {
+              console.log(_.padEnd(item.url, 80), item.result);
+              if (item.result !== 'SUCCESS' && item.package) {
+                utils.printJson(item.package);
+              }
+            });
+          })
+          .catch(utils.printError);
+      });
   });
 
 program.parse(process.argv);

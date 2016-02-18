@@ -17,5 +17,15 @@ module.exports = {
   printJson: function (value) {
     console.log(JSON.stringify(value, null, 2));
     return value;
+  },
+  validatePackage: function (value) {
+    var properties = ['scripts', 'scripts.build', 'scripts.release', 'scripts.test', 'scripts.start']
+      .map(function (prop) {
+        return _.property(prop)(value);
+      })
+      .filter(function (prop) {
+        return !prop;
+      });
+    return properties.length ? {result: 'WRONG scripts section'} : {};
   }
 };
