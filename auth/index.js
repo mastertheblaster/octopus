@@ -1,14 +1,15 @@
 'use strict';
 
-const Q    = require('bluebird');
-const _    = require('lodash');
-const read = require('read');
+const Q       = require('bluebird');
+const _       = require('lodash');
+const read    = require('read');
+const process = require('process');
 
 
 function getToken(prompt) {
-  console.log(prompt);
+  process.stderr.write(prompt + '\n');
   return new Q(function (resolve, reject) {
-    read({prompt: 'Token: '}, function (error, token, isDefault) {
+    read({prompt: 'Token: ', output: process.stderr}, function (error, token, isDefault) {
       if (error || isDefault || !token) {
         reject('Bad token');
       } else {
@@ -20,7 +21,7 @@ function getToken(prompt) {
 
 function getPass() {
   return new Q(function (resolve, reject) {
-    read({prompt: 'Pass: ', silent: true}, function (error, pass, isDefault) {
+    read({prompt: 'Pass: ', silent: true, output: process.stderr}, function (error, pass, isDefault) {
       if (error || isDefault || !pass) {
         reject('Bad pass');
       } else {
@@ -32,7 +33,7 @@ function getPass() {
 
 function getUser() {
   return new Q(function (resolve, reject) {
-    read({prompt: 'User: '}, function (error, user, isDefault) {
+    read({prompt: 'User: ', output: process.stderr}, function (error, user, isDefault) {
       if (error || isDefault || !user) {
         reject('Bad user');
       } else {
@@ -43,9 +44,9 @@ function getUser() {
 }
 
 function getHost(prompt) {
-  console.log(prompt);
+  process.stderr.write(prompt + '\n');
   return new Q(function (resolve, reject) {
-    read({prompt: 'Host:'}, function (error, host, isDefault) {
+    read({prompt: 'Host:', output: process.stderr}, function (error, host, isDefault) {
       if (error || isDefault || !host) {
         reject('Bad host');
       } else {
@@ -56,7 +57,7 @@ function getHost(prompt) {
 }
 
 function getCreds(prompt) {
-  console.log(prompt);
+  process.stderr.write(prompt + '\n');
   return Q.reduce([getUser, getPass], function (result, task) {
     return task().then(function (taskResult) {
       return _.merge({}, result, taskResult);
