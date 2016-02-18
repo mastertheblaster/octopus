@@ -8,20 +8,18 @@ npm i -g
 
 ## Use
 ```bash
-
   Usage: octopus [options] [command]
 
 
   Commands:
 
-    cache [command]                       Cache manipulation
-    projects [query]                      List the projects on CI
-    builds [query]                        List all build types on CI
-    repos [query]                         List all repos (vcs-roots) on CI
-    report:builds                         Show build summary report
-    report:repos                          Show repository summary report
-    report:repos-for-template [template]  Show repositories of given build template
-    report:package [template]             Show report on package.json for a given build type
+    cache [command]               Cache manipulation
+    projects [options]            List all projects
+    builds [options]              List all the builds
+    repos [options]               List all repos (vcs-roots)
+    report:builds [options]       Show build summary report
+    report:repos [options]        Show repository summary report
+    analyze [options] <template>  Show analytics for a given build type (template)
 
   Tool for querying TeamCity (CI) and GITHUB
 
