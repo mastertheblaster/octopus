@@ -5,6 +5,19 @@ const _    = require('lodash');
 const read = require('read');
 
 
+function getToken(prompt) {
+  console.log(prompt);
+  return new Q(function (resolve, reject) {
+    read({prompt: 'Token: '}, function (error, token, isDefault) {
+      if (error || isDefault || !token) {
+        reject('Bad token');
+      } else {
+        resolve({token: token});
+      }
+    });
+  });
+}
+
 function getPass() {
   return new Q(function (resolve, reject) {
     read({prompt: 'Pass: ', silent: true}, function (error, pass, isDefault) {
@@ -53,5 +66,6 @@ function getCreds(prompt) {
 
 module.exports = {
   getCreds: getCreds,
-  getHost: getHost
+  getHost: getHost,
+  getToken: getToken
 };
