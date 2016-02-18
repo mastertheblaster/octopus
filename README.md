@@ -28,3 +28,10 @@ npm i -g
     -h, --help     output usage information
     -V, --version  output the version number
 ```
+
+### Cache
+```bash
+octopus cache       # List files inside a cache directory
+octopus cache dir   # Show path of a cache directory
+octopus cache clean # Clean the cache directory
+```
