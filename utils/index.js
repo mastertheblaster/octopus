@@ -1,9 +1,36 @@
 'use strict';
 
-const _ = require('lodash');
+const _       = require('lodash');
+const process = require('process');
 
 
 module.exports = {
+  printer: function (attributes, format) {
+    if (format === 'csv') {
+      return function (values) {
+        values.forEach(function (value, index) {
+          var keys = attributes ? attributes.split(',') : _.keys(value);
+          if (index === 0) {
+            console.log(keys.join(','));
+          }
+          console.log(keys.map(function (key) {
+            return _.property(key)(value);
+          }).join(','));
+        });
+        return values;
+      };
+    }
+    return function (values) {
+      values
+        .map(function (value) {
+          return attributes ? _.pick(value, attributes.split(',')) : value;
+        })
+        .forEach(function (value) {
+          console.log(JSON.stringify(value, null, 2));
+        });
+      return values;
+    };
+  },
   filter: function (query) {
     return function (values) {
       return query ? values.filter(function (value) {
@@ -11,21 +38,13 @@ module.exports = {
       }) : values;
     };
   },
+  print: function (what) {
+    console.log(what);
+  },
   printError: function (error) {
-    console.error(error);
-  },
-  printJson: function (value) {
-    console.log(JSON.stringify(value, null, 2));
-    return value;
-  },
-  validatePackage: function (value) {
-    var properties = ['scripts', 'scripts.build', 'scripts.release', 'scripts.test', 'scripts.start']
-      .map(function (prop) {
-        return _.property(prop)(value);
-      })
-      .filter(function (prop) {
-        return !prop;
-      });
-    return properties.length ? {result: 'WRONG scripts section'} : {};
+    process.stderr.write('Sorry, FAILED! See details below.');
+    process.stderr.write('\n');
+    process.stderr.write(error ? error.toString() : '');
+    process.stderr.write('\n');
   }
 };

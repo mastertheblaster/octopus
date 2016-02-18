@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+/* jshint latedef:false */
 'use strict';
 
 const Q       = require('bluebird');
@@ -32,9 +33,10 @@ let ghClient = gh.client({
   })
 });
 
-cache.toFile(ciClient, 'getProjects',   CACHE_DIR + '/projects.json');
-cache.toFile(ciClient, 'getBuildTypes', CACHE_DIR + '/build-types.json');
-cache.toFile(ciClient, 'getVcsRoots',   CACHE_DIR + '/vcs-roots.json');
+cache.toFile(ciClient, 'getProjects',    CACHE_DIR + '/projects.json');
+cache.toFile(ciClient, 'getBuildTypes',  CACHE_DIR + '/build-types.json');
+cache.toFile(ciClient, 'getVcsRoots',    CACHE_DIR + '/vcs-roots.json');
+cache.toFile(ghClient, 'getPackageJson', CACHE_DIR + '/${arguments[0].replace(/[@:./~]/g, "_")}.json');
 
 program
   .version('1.0.0')
@@ -45,166 +47,157 @@ program
   .description('Cache manipulation')
   .action(function (command) {
     if (command === 'dir') {
-      console.log(CACHE_DIR);
+      utils.print(CACHE_DIR);
     } else if (command === 'clean') {
-      shell.rm(CACHE_DIR + '/projects.json');
-      shell.rm(CACHE_DIR + '/build-types.json');
-      shell.rm(CACHE_DIR + '/vcs-roots.json');
+      silently(function () {
+        shell.rm(CACHE_DIR + '/*.json');
+      });
     } else {
-      console.log(shell.ls(CACHE_DIR));
+      silently(function () {
+        shell.ls(CACHE_DIR).forEach(utils.print);
+      });
+    }
+    function silently(callback) {
+      var isSilent = shell.config.silent;
+      shell.config.silent = true;
+      callback();
+      shell.config.silent = isSilent;
     }
   });
 
 program
-  .command('projects [query]')
-  .description('List the projects on CI')
-  .action(function (query) {
+  .command('projects')
+  .option('-q, --query <value>', 'Only with description')
+  .option('-a, --attributes <value...>', 'Only attributes')
+  .option('-f, --format <value>', 'Output format')
+  .description('List all projects')
+  .action(function () {
     ciClient
       .getProjects()
-      .then(utils.filter(query))
-      .then(utils.printJson)
+      .then(utils.filter(this.query))
+      .then(utils.printer(this.attributes, this.format))
       .catch(utils.printError);
   });
 
 program
-  .command('builds [query]')
-  .description('List all build types on CI')
-  .action(function (query) {
+  .command('builds')
+  .option('-q, --query <value>', 'Only with description')
+  .option('-a, --attributes <value...>', 'Only attributes')
+  .option('-f, --format <value>', 'Output format')
+  .description('List all the builds')
+  .action(function () {
     ciClient
       .getBuildTypes()
-      .then(utils.filter(query))
-      .then(utils.printJson)
+      .then(utils.filter(this.query))
+      .then(utils.printer(this.attributes, this.format))
       .catch(utils.printError);
   });
 
 program
-  .command('repos [query]')
-  .description('List all repos (vcs-roots) on CI')
-  .action(function (query) {
+  .command('repos')
+  .option('-q, --query <value>', 'Only with description')
+  .option('-a, --attributes <value...>', 'Only attributes')
+  .option('-f, --format <value>', 'Output format')
+  .description('List all repos (vcs-roots)')
+  .action(function () {
     ciClient
       .getVcsRoots()
-      .then(utils.filter(query))
-      .then(utils.printJson)
+      .then(utils.filter(this.query))
+      .then(utils.printer(this.attributes, this.format))
       .catch(utils.printError);
   });
 
 program
   .command('report:builds')
+  .option('-q, --query <value>', 'Only with description')
+  .option('-a, --attributes <value...>', 'Only attributes')
+  .option('-f, --format <value>', 'Output format')
   .description('Show build summary report')
   .action(function () {
     ciClient
       .getBuildTypes()
       .then(ci.groupBuildTypes)
-      .then(utils.printJson)
+      .then(utils.filter(this.query))
+      .then(utils.printer(this.attributes, this.format))
       .catch(utils.printError);
   });
 
 program
   .command('report:repos')
+  .option('-f, --format <value>', 'Output format')
   .description('Show repository summary report')
   .action(function () {
     ciClient
       .getVcsRoots()
       .then(ci.explodeRepos)
       .then(ci.groupRepos)
-      .then(utils.printJson)
+      .then(utils.printer(null, this.format))
       .catch(utils.printError);
   });
 
 program
-  .command('report:repos-for-template [template]')
-  .description('Show repositories of given build template')
+  .command('analyze <template>')
+  .option('-a, --attributes <value...>', 'Only attributes')
+  .option('-f, --format <value>', 'Output format')
+  .description('Show analytics for a given build type (template)')
   .action(function (template) {
+
+    var attributes = this.attributes,
+        format = this.format;
+
     ciClient
       .getBuildTypes()
       .then(function (buildTypes) {
-        return ci.getRepoIdsOfBuildTypes(buildTypes, template);
+        // Filter only builds having a given template.
+        return buildTypes.filter(function (build) {
+          return build.template && build.template.id === template;
+        });
       })
-      .then(function (repoIds) {
+      .then(function (buildTypes) {
+        // Extract the build repository ID.
+        return buildTypes.map(function (build) {
+          return _.assign(build, {
+            repoId: _.first(build['vcs-root-entries']['vcs-root-entry']).id
+          });
+        });
+      })
+      .then(function (buildTypes) {
+        var targetRepoIds = buildTypes.map(function (build) { return build.repoId; });
         ciClient
           .getVcsRoots()
           .then(ci.explodeRepos)
           .then(function (repos) {
             return repos.filter(function (repo) {
-              return _.includes(repoIds, repo.id);
-            });
-          })
-          .then(function (repos) {
-            return repos
-              .map(function (repo) {
-                return repo.url;
-              })
-              .sort();
-          })
-          .then(utils.printJson)
-          .catch(utils.printError);
-      })
-      .catch(utils.printError);
-  });
-
-program
-  .command('report:package [template]')
-  .description('Show report on package.json for a given build type')
-  .action(function (template) {
-    ciClient
-      .getBuildTypes()
-      .then(function (buildTypes) {
-        return ci.getRepoIdsOfBuildTypes(buildTypes, template);
-      })
-      .then(function (repoIds) {
-        ciClient
-          .getVcsRoots()
-          .then(ci.explodeRepos)
-          .then(function (repos) {
-            return repos.filter(function (repo) {
-              return _.includes(repoIds, repo.id);
+              return _.includes(targetRepoIds, repo.id);
             });
           })
           .then(function (repos) {
             return Q.reduce(repos, function (result, repo) {
-              if (repo.url.indexOf('github.com') === -1)  {
-                return result.concat({
-                  url: repo.url,
-                  result: 'NOT SUPPORTED'
-                });
+              if (repo.isOnGitHub) {
+                return ghClient
+                  .getPackageJson(repo.url)
+                  .then(function (json) {
+                    return result.concat(_.assign(repo, {downloaded: true, scripts: json.scripts}));
+                  })
+                  .catch(function () {
+                    return result.concat(repo);
+                  });
+              } else {
+                return result.concat(repo);
               }
-              return ghClient
-                .getPackageJson(repo.url)
-                .then(function (json) {
-                  return result.concat({
-                    url: repo.url,
-                    package: json,
-                    result: 'SUCCESS'
-                  });
-                })
-                .catch(function () {
-                  return result.concat({
-                    url: repo.url,
-                    result: 'NOT FOUND OR ACCESS DENIED'
-                  });
-                });
             }, []);
           })
           .then(function (repos) {
-            return repos.map(function (repo) {
-              if (repo.package) {
-                return _.merge(repo, utils.validatePackage(repo.package));
-              }
-              return repo;
+            return buildTypes.map(function (build) {
+              return _.assign(build, {repo: repos.find(function (repo) {
+                return build.repoId === repo.id;
+              })});
             });
           })
-          .then(function (result) {
-            result.sort(function (a, b) {
-              return a.result.localeCompare(b.result);
-            }).forEach(function (item) {
-              console.log(_.padEnd(item.url, 80), item.result);
-              if (item.result !== 'SUCCESS' && item.package) {
-                utils.printJson(item.package);
-              }
-            });
-          })
+          .then(utils.printer(attributes, format))
           .catch(utils.printError);
-      });
+      })
+      .catch(utils.printError);
   });
 
 program.parse(process.argv);

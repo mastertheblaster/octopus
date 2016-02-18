@@ -6,7 +6,7 @@ const _       = require('lodash');
 
 
 function callGitHub(config, path, resolve, reject) {
-  console.log('Getting', path, '...');
+  process.stderr.write(['Getting', path, '...\n'].join(' '));
   request.get({
     url: ['https://raw.githubusercontent.com/', path].join(''),
     json: true,

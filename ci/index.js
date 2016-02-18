@@ -3,10 +3,11 @@
 const Q       = require('bluebird');
 const request = require('request');
 const _       = require('lodash');
+const process = require('process');
 
 
 function callCi(config, path, resolve, reject) {
-  console.log('Getting', path, '...');
+  process.stderr.write(['Getting', path, '...\n'].join(' '));
   request.get({
     url: [config.host, path].join(''),
     json: true,
@@ -53,15 +54,6 @@ function call(config, path) {
 }
 
 module.exports = {
-  getRepoIdsOfBuildTypes: function (buildTypes, template) {
-    return buildTypes
-      .filter(function (build) {
-        return build.template && build.template.id === template;
-      })
-      .map(function (build) {
-        return _.first(build['vcs-root-entries']['vcs-root-entry']).id;
-      });
-  },
   groupBuildTypes: function (buildTypes) {
     return _(buildTypes)
       .groupBy(function (build) {
@@ -70,6 +62,9 @@ module.exports = {
       .mapValues(function (value) {
         return value.length;
       })
+      .map(function (value, key) {
+        return {templateId: key, count: value};
+      })
       .value();
   },
   groupRepos: function (repos) {
@@ -77,12 +72,8 @@ module.exports = {
       .groupBy(function (repo) {
         return repo.host;
       })
-      .mapValues(function (group) {
-        return _.mapValues(_.groupBy(group, function (repo) {
-          return repo.owner;
-        }), function (reposInGroup) {
-          return reposInGroup.length;
-        });
+      .map(function (value, key) {
+        return {host: key, count: value.length};
       })
       .value();
   },
@@ -97,19 +88,19 @@ module.exports = {
         };
       })
       .map(function (repo) {
-        if (repo.url.indexOf('github.com') === -1) {
-          return _.assign({}, repo, {
-            host : '???',
-            owner: '???',
-            name : '???'
+        var defaults = {host: '???', owner: '???', name: '???', isOnGitHub: false};
+        if (repo.url.indexOf('git@') === -1) {
+          return _.assign({}, defaults, repo, {
+            host: repo.url
           });
         }
         var hostPath = repo.url.split(':', 2);
         var ownerName = _.last(hostPath).split('/', 2);
-        return _.assign({}, repo, {
-          host : _.first(hostPath),
+        return _.assign({}, defaults, repo, {
+          host: _.first(hostPath),
           owner: _.first(ownerName),
-          name : _.last(ownerName)
+          name: _.last(ownerName),
+          isOnGitHub: repo.url.indexOf('github.com') !== -1
         });
       });
   },
