@@ -8,19 +8,25 @@ npm i -g
 
 ## Use
 ```bash
-octopus --help            # Obvious, show the help
 
-octopus cache dir         # Show the temporary cache location
-octopus cache list        # List files in a cache
-octopus cache clean       # Clean, clean, clean a cache
+  Usage: octopus [options] [command]
 
-octopus projects          # List all projects
-octopus projects blah     # List projects containing a blah text in description
 
-octopus builds-types      # List all build types
-octopus builds-types blah # List all builds types containg a blah text in description
+  Commands:
 
-octopus vcs-roots         # List all VCS urls
+    cache [command]                       Cache manipulation
+    projects [query]                      List the projects on CI
+    builds [query]                        List all build types on CI
+    repos [query]                         List all repos (vcs-roots) on CI
+    report:builds                         Show build summary report
+    report:repos                          Show repository summary report
+    report:repos-for-template [template]  Show repositories of given build template
+    report:package [template]             Show report on package.json for a given build type
 
-octopus report-templates  # Show build template report
+  Tool for querying TeamCity (CI) and GITHUB
+
+  Options:
+
+    -h, --help     output usage information
+    -V, --version  output the version number
 ```
