@@ -35,3 +35,13 @@ octopus cache       # List files inside a cache directory
 octopus cache dir   # Show path of a cache directory
 octopus cache clean # Clean the cache directory
 ```
+
+### Samples
+Get build statics in CSV format
+```bash
+octopus report:builds -f csv -a templateId,count
+```
+Analyze the packages and print out response in CSV format 
+```bash
+octopus analyze TEMPLATE_ID -f csv -a projectName,name,repo.url,repo.isOnGitHub,repo.downloaded,repo.scripts.build,repo.scripts.release,repo.scripts.test,repo.scripts.start > result.csv
+```
