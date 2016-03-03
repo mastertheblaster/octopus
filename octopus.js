@@ -39,7 +39,7 @@ cache.toFile(ciClient, 'getVcsRoots',    CACHE_DIR + '/vcs-roots.json');
 cache.toFile(ghClient, 'getPackageJson', CACHE_DIR + '/${arguments[0].replace(/[@:./~]/g, "_")}.json');
 
 program
-  .version('1.0.0')
+  .version('3.0.0')
   .description('Tool for querying TeamCity (CI) and GITHUB');
 
 program
@@ -193,6 +193,24 @@ program
                 return build.repoId === repo.id;
               })});
             });
+          })
+          .then(function (buildsWithRepo) {
+            // Running once again over the failed builds
+            // and retrieving from sub modules.
+            return Q.reduce(buildsWithRepo, function (result, build) {
+              if (build.repo.isOnGitHub && !build.repo.downloaded) {
+                return ghClient
+                  .getSubPackageJson(build.repo.url, build.name)
+                  .then(function (json) {
+                    build.repo = _.assign(build.repo, {downloaded: true, scripts: json.scripts});
+                    return result.concat(build);
+                  })
+                  .catch(function () {
+                    return result.concat(build);
+                  });
+              }
+              return result.concat(build);
+            }, []);
           })
           .then(utils.printer(attributes, format))
           .catch(utils.printError);

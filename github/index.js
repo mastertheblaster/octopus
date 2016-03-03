@@ -41,6 +41,10 @@ function call(config, path) {
 module.exports = {
   client: function (config) {
     return {
+      getSubPackageJson: function (repo, sub) {
+        var path = _.last(repo.split(':')).replace('.git', '') + '/master/' + sub + '/package.json';
+        return call(config, path);
+      },
       getPackageJson: function (repo) {
         var path = _.last(repo.split(':')).replace('.git', '') + '/master/package.json';
         return call(config, path);
